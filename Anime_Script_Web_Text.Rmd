@@ -1,0 +1,284 @@
+---
+title: "Anime Script of One Piece Red and Made in Abyss"
+author: "Sophia Sanchez"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r fig.width= 9, fig.height=6, echo=FALSE}
+knitr::include_graphics("C:/Users/Sophi/OneDrive/Pictures/Saved Pictures/MadeinAbyss.jpg")
+
+knitr::include_graphics("C:/Users/Sophi/Downloads/One_Piece_Film_Red_Visual_Poster.jpg")
+```
+
+```{r setup, include=FALSE}
+library(rvest)
+library(tidyverse)
+library(selectr)
+library(purrr)
+library(knitr)
+library(syuzhet)
+library(dplyr)
+library(tidytext)
+library(ggplot2)
+library(RColorBrewer)
+library(wordcloud)
+library(wordcloud2)
+library(stringr)
+library(SnowballC)
+library(lubridate)
+library(rmarkdown)
+library(tm)
+library(NLP)
+library(qdap)
+```
+
+### Getting the Script of Made in Abyss and One Piece Red
+
+Using Sublikescript to get script anime movies such as One Piece Red Movie and Made in Abyss.
+
+```{r anime script, include=FALSE}
+url1 <-"https://subslikescript.com/movie/Made_in_Abyss-7222086"
+
+url2 <-"https://subslikescript.com/movie/One_Piece_Film_Red-16183464"
+
+```
+
+### Extract Made in Abyss script, check for character,and split into sentece,
+
+Read the Made in Abyss with the html node of the full script. The ".full-script" receive the full text of Made In Abyss script. After the receiving the text, checking the variable if character since the text is string character. Then split the text into sentence to read carefully and the code to read carefully.
+
+```{r Made In Abyss Script, include=FALSE}
+#Read HTML and extract text
+xxx.Abyss <- url1 %>%
+  read_html() %>%
+  html_nodes(".full-script") %>%
+  html_text()
+
+#Check if xxx.Abyss is a character vector
+if (!is.character(xxx.Abyss)) {
+  xxx.Abyss <- as.character(xxx.Abyss)
+}
+
+#Split the text into sentence
+xxx.abyss.split <- unlist(str_split(xxx.Abyss,"\\."))
+
+```
+
+### Extract One Piece Red script, check for character, and split into sentece
+
+Read the One Piece Red with the html node of the full script. The ".full-script" receive the full text of One Piece Red script. After the receiving the text, checking the variable if character since the text is string character. Then split the text into sentence to read carefully and the code to read carefully.
+
+```{r One Piece Red, include=FALSE}
+#Read HTML and extract text
+xxx.One <- url2 %>%
+  read_html() %>%
+  html_nodes(".full-script") %>%
+  html_text()
+
+#Check if xxx.One is a character vector
+if (!is.character(xxx.One)) {
+  xxx.One <- as.character(xxx.One)
+}
+
+#Split the text into sentence
+xxx.one.split <- unlist(str_split(xxx.One,"\\."))
+
+```
+
+### Cleaning the Made in Abyss with tm Corpus
+
+Using tm is lot easier to clean the text and remove stop words. Replacing the unnecessary words as blanks such as "offthis" or "mitty"
+
+```{r include=FALSE}
+#Cleaning the text and getting the stop words
+stopwords("en")
+AbbysCorpus <- Corpus(VectorSource(xxx.abyss.split))
+
+AbbysCorpus <- tm_map(AbbysCorpus, tolower)
+
+AbbysCorpus <- tm_map(AbbysCorpus, removePunctuation)
+
+AbbysCorpus <- tm_map(AbbysCorpus, removeNumbers)
+
+
+AbbysCorpus <- tm_map(AbbysCorpus, removeWords,stopwords("en"))
+AbbysCorpus <- tm_map(AbbysCorpus, stripWhitespace)
+AbbysCorpus <- tm_map(AbbysCorpus, content_transformer(gsub), pattern = "youre", replacement = " ")
+AbbysCorpus <- tm_map(AbbysCorpus, content_transformer(gsub), pattern = "hey", replacement = " ")
+AbbysCorpus <- tm_map(AbbysCorpus, content_transformer(gsub), pattern = "whats", replacement = " ")
+AbbysCorpus <- tm_map(AbbysCorpus, content_transformer(gsub), pattern = "firstah", replacement = " ")
+AbbysCorpus <- tm_map(AbbysCorpus, content_transformer(gsub), pattern = "offthis", replacement = " ")
+AbbysCorpus <- tm_map(AbbysCorpus, content_transformer(gsub), pattern = "innards", replacement = " ")
+AbbysCorpus <- tm_map(AbbysCorpus, content_transformer(gsub), pattern = "nanachius", replacement = "us")
+AbbysCorpus <- tm_map(AbbysCorpus, content_transformer(gsub), pattern = "wwel", replacement = " ")
+AbbysCorpus <- tm_map(AbbysCorpus, content_transformer(gsub), pattern = "ityou", replacement = "you")
+AbbysCorpus <- tm_map(AbbysCorpus, content_transformer(gsub), pattern = "restor", replacement = "restore")
+AbbysCorpus <- tm_map(AbbysCorpus, content_transformer(gsub), pattern = "nanachi", replacement = "")
+AbbysCorpus <- tm_map(AbbysCorpus, content_transformer(gsub), pattern = "mitty", replacement = "")
+AbbysCorpus <- tm_map(AbbysCorpus, content_transformer(gsub), pattern = "reg", replacement = "")
+AbbysCorpus <- tm_map(AbbysCorpus, content_transformer(gsub), pattern = "riko", replacement = "")
+AbbysCorpus <- tm_map(AbbysCorpus, content_transformer(gsub), pattern = "adsbygoog", replacement = "")
+
+```
+
+### Cleaning the One Piece Red with tm Corpus
+
+Same as Made in Abyss with using the library of tm to clean out junk, stop word, and unnecessary words
+
+```{r include=FALSE}
+#Cleaning the text and getting the stop words
+OnePCorpus <- Corpus(VectorSource(xxx.one.split))
+OnePCorpus <- tm_map(OnePCorpus, tolower)
+OnePCorpus <- tm_map(OnePCorpus, removePunctuation)
+OnePCorpus <- tm_map(OnePCorpus, removeNumbers)
+
+stopwords("en")
+
+OnePCorpus <- tm_map(OnePCorpus, removeWords,stopwords("en"))
+OnePCorpus <- tm_map(OnePCorpus, stripWhitespace)
+OnePCorpus <- tm_map(OnePCorpus, content_transformer(gsub), pattern = "im", replacement = " ")
+OnePCorpus <- tm_map(OnePCorpus, content_transformer(gsub), pattern = "dont", replacement = " ")
+OnePCorpus <- tm_map(OnePCorpus, content_transformer(gsub), pattern = "uta", replacement = " ")
+OnePCorpus <- tm_map(OnePCorpus, content_transformer(gsub), pattern = "planluffi", replacement = " ")
+OnePCorpus <- tm_map(OnePCorpus, content_transformer(gsub), pattern = "erapleas", replacement = " ")
+OnePCorpus <- tm_map(OnePCorpus, content_transformer(gsub), pattern = "kirbyguy", replacement = " ")
+OnePCorpus <- tm_map(OnePCorpus, content_transformer(gsub), pattern = "fingersluffyyou", replacement = " ")
+OnePCorpus <- tm_map(OnePCorpus, content_transformer(gsub), pattern = "cao", replacement = " ")
+OnePCorpus <- tm_map(OnePCorpus, content_transformer(gsub), pattern = " youunfortun", replacement = " ")
+
+```
+
+#Frequency number of Made in Abyss and One Piece The graph for the frequent words that appear in Made in Abyss and One Piece Red in separate graph.
+
+```{r}
+madein_abyss <- tm_map(AbbysCorpus, stemDocument)
+
+term_countabby <- freq_terms(madein_abyss,20)
+
+plot(term_countabby)
+
+
+one_piece_r <- tm_map(OnePCorpus, stemDocument)
+term_countonep <- freq_terms(one_piece_r,20)
+
+plot(term_countonep)
+
+```
+
+### Creating Document Term Matrix,Sort the Frequency, and plot the most frequent words for Made in Abyss
+
+The Document-Term Matrix that show the relationship which each row as document and the columns as the terms.The top 5 most frequent word is "just" with the count number of 30.
+
+```{r echo=TRUE}
+#To Analyze the text data, using the Document-Term Matrix (DTM)
+Abby_Made = DocumentTermMatrix(madein_abyss)
+inspect(Abby_Made)
+miabyss_m <- as.matrix(Abby_Made)
+
+#Sort by decreasing value of frequency
+miabyss_v <- sort(colSums(miabyss_m),decreasing = TRUE)
+miabyss_d <- data.frame(word = names(miabyss_v), freq=miabyss_v)
+head(miabyss_d, 5)
+
+#Plot the most frequent words
+barplot(miabyss_d[1:5,]$freq, las = 2, names.arg = miabyss_d[1:5,]$word,
+        col = "lightgreen",main = "Top 5 most frequent words",
+        ylab = "Word frequencis")
+
+```
+
+###Creating Document Term Matrix,Sort the Frequency, and plot the most frequent words for One Piece Red The Document-Term Matrix that show the relationship which each row as document and the columns as the terms.The top 5 most frequent word is "let" with the count number of 40.
+
+```{r}
+#Building Document-Term Matrix (DTM)
+One_Red = DocumentTermMatrix(one_piece_r)
+inspect(One_Red)
+onepiecer_m <- as.matrix(One_Red)
+
+#Sort by decreasing value of frequency
+onepiecer_v <- sort(colSums(onepiecer_m),decreasing = TRUE)
+onepiecer_d <- data.frame(word = names(onepiecer_v), freq=onepiecer_v)
+head(onepiecer_d, 5)
+
+#Plot the most frequent words
+barplot(onepiecer_d[1:5,]$freq, las = 2, names.arg = onepiecer_d[1:5,]$word,
+        col = "red",main = "Top 5 most frequent words",
+        ylab = "Word frequencis")
+
+```
+
+### World Cloud for Made in Abyss and word assocation
+
+```{r fig.width= 9, fig.height=6}
+#Generate Word Cloud
+set.seed(1234)
+wordcloud(words = miabyss_d$word, freq = miabyss_d$freq, min.freq = 1,
+          max.words=200, random.order=FALSE, rot.per=0.35, 
+          colors=brewer.pal(8, "Dark2"))
+
+#Word Association 
+findAssocs(Abby_Made, terms = c("just","like","pleas"), corlimit = 0.25)
+```
+
+### World Cloud for One Piece Redand word assocation
+
+```{r fig.width= 9, fig.height=6}
+#Generate Word Cloud
+set.seed(1234)
+wordcloud(words = onepiecer_d$word, freq = onepiecer_d$freq, min.freq = 1,
+          max.words=200, random.order=FALSE, rot.per=0.35, 
+          colors=brewer.pal(8, "Dark2"))
+
+#Word Association 
+findAssocs(One_Red, terms = c("want","sea","new"), corlimit = 0.25)
+```
+
+### Positive/Negative and Emotion of Made in Abyss
+
+Made in Abyss has lot of negative words and lot of fear since the movie has its scary moments and show words that relates the character's fear.
+
+```{r}
+# Calculate sentiment scores of Made in Abyss
+result <- get_nrc_sentiment(as.character(madein_abyss))
+result1<-data.frame(t(result))
+Made_in_Abyss <- data.frame(rowSums(result1))
+
+#name rows and columns of the data frame
+names(Made_in_Abyss)[1] <- "count"
+Made_in_Abyss <- cbind("sentiment" = rownames(Made_in_Abyss), Made_in_Abyss)
+rownames(Made_in_Abyss) <- NULL
+
+#plot the first 8 rows,the distinct emotions
+qplot(sentiment, data=Made_in_Abyss[1:8,], weight=count, geom="bar",fill=sentiment)+ggtitle("Made in Abyss Sentiments")
+
+#plot the last 2 rows ,positive and negative
+qplot(sentiment, data=Made_in_Abyss[9:10,], weight=count, geom="bar",fill=sentiment)+ggtitle("Made in Abyss Sentiments")
+
+```
+
+### Positive/Negative and Emotion of One Piece Red
+
+This is similar to Made in Abyss of fear and negative. This may result of characters being scare or showing fear through other characters.
+
+```{r}
+# Calculate sentiment scores of Made in Abyss
+result2 <- get_nrc_sentiment(as.character(one_piece_r))
+result21<-data.frame(t(result2))
+One_Piece_Red <- data.frame(rowSums(result21))
+
+#name rows and columns of the data frame
+names(One_Piece_Red)[1] <- "count"
+One_Piece_Red <- cbind("sentiment" = rownames(One_Piece_Red), One_Piece_Red)
+rownames(One_Piece_Red) <- NULL
+
+#plot the first 8 rows,the distinct emotions
+qplot(sentiment, data=One_Piece_Red[1:8,], weight=count, geom="bar",fill=sentiment)+ggtitle("One Piece Red Sentiments")
+
+#plot the last 2 rows ,positive and negative
+qplot(sentiment, data=One_Piece_Red[9:10,], weight=count, geom="bar",fill=sentiment)+ggtitle("One Piece Red Sentiments")
+
+
+```
+
+In conclusion, both anime movies show words that is more negative but still have words that is positive that the character made state in the script. The emotion in characters in Made in Abyss and One Piece Red show a lot fear which indicate the negative words and character said something scary to scare the character.
